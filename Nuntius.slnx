@@ -3,6 +3,10 @@
     <File Path="../.gitignore" />
     <File Path="README.md" />
   </Folder>
+  <Folder Name="/root/.github/" />
+  <Folder Name="/root/.github/workflows/">
+    <File Path=".github/workflows/nuget.yml" />
+  </Folder>
   <Project Path="src/Nuntius/Nuntius.csproj" />
   <Project Path="tests/Nuntius.Tests/Nuntius.Tests.csproj" />
 </Solution>
