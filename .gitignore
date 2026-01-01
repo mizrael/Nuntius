@@ -1,0 +1,9 @@
+bin/
+obj/
+.vs/
+*.DotSettings.user
+.docker/
+packages/
+TestResults/
+.DS_Store
+.idea/

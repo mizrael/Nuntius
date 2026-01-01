@@ -1,0 +1,49 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<PackageVersion>$(PackageVersion)</PackageVersion>
+		<IsPackable>true</IsPackable>
+		<Authors>davidguida</Authors>
+		<Product>Nuntius</Product>
+		<NeutralLanguage>en-US</NeutralLanguage>
+		<Title>Nuntius</Title>
+		<PackageDescription>Nuntius is a lightweight, open-source C# mediator inspired by MediatR, focused on a minimal feature set and designed to remain simple, readable, and open forever.</PackageDescription>
+		<Copyright>Copyright 2025</Copyright>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageTags>mediator CQRS commands queries dotnet-core csharp</PackageTags>
+		<PackageOutputPath>../../packages/</PackageOutputPath>
+		<RepositoryUrl>$(RepositoryUrl)</RepositoryUrl>
+		<PackageProjectUrl>$(PackageProjectUrl)</PackageProjectUrl>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="Nuntius.Tests" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="../../README.md" Pack="true" PackagePath="\">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+	</ItemGroup>
+
+
+</Project>
