@@ -18,6 +18,63 @@
 
 Nuntius deliberately implements **only a small subset of MediatR concepts**, and this scope is intentional and permanent.
 
+## Usage
+
+Register Nuntius in your DI container (typically in `Program.cs`) and let it scan for your handlers:
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+
+var services = new ServiceCollection();
+
+services.AddNuntius(cfg =>
+{
+    cfg.RegisterServicesFromAssemblyContaining<Program>();
+});
+```
+
+Then create a request + handler pair (without a return value):
+
+```csharp
+using Nuntius;
+
+public sealed record CreateUser(string Email) : IRequest;
+
+public sealed class CreateUserHandler : IRequestHandler<CreateUser>
+{
+    public ValueTask Handle(CreateUser request, CancellationToken ct)
+    {
+        // ...create the user...
+        return ValueTask.CompletedTask;
+    }
+}
+```
+
+And, when you need a return value, create a request + handler pair with a response type:
+
+```csharp
+using Nuntius;
+
+public sealed record Ping(string Message) : IRequest<string>;
+
+public sealed class PingHandler : IRequestHandler<Ping, string>
+{
+    public ValueTask<string> Handle(Ping request, CancellationToken ct)
+        => ValueTask.FromResult($"Pong: {request.Message}");
+}
+```
+
+Finally, resolve `IMediator` and send the request:
+
+```csharp
+var provider = services.BuildServiceProvider();
+
+var mediator = provider.GetRequiredService<IMediator>();
+await mediator.Send(new CreateUser("user@example.com"));
+
+var result = await mediator.Send(new Ping("hello"));
+```
+
 ## When to Use Nuntius
 
 Nuntius is a good fit if you:
