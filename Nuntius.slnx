@@ -5,6 +5,7 @@
   </Folder>
   <Folder Name="/root/.github/" />
   <Folder Name="/root/.github/workflows/">
+    <File Path=".github/workflows/build-and-test.yml" />
     <File Path=".github/workflows/nuget.yml" />
   </Folder>
   <Project Path="src/Nuntius/Nuntius.csproj" />
