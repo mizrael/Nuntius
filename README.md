@@ -1,5 +1,8 @@
 # Nuntius
 [![Nuget](https://img.shields.io/nuget/v/Nuntius?style=plastic)](https://www.nuget.org/packages/Nuntius/)
+![GitHub CI](https://github.com/mizrael/nuntius/actions/workflows/build-and-test.yml/badge.svg)
+[![GitHub Issues](https://img.shields.io/github/issues/mizrael/nuntius)](https://github.com/mizrael/nuntius/issues)
+[![License](https://img.shields.io/badge/license-MIT-informational)](/LICENSE.txt)
 
 > *Nuntius* (Latin): *messenger*
 
