@@ -1,4 +1,5 @@
 # Nuntius
+[![Nuget](https://img.shields.io/nuget/v/Nuntius?style=plastic)](https://www.nuget.org/packages/Nuntius/)
 
 > *Nuntius* (Latin): *messenger*
 
