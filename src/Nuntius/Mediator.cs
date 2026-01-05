@@ -6,7 +6,7 @@ namespace Nuntius;
 internal class Mediator : IMediator
 {
     private readonly IServiceProvider _sp;
-    private readonly ConcurrentDictionary<Type, Type> _handlersWithResponseTypesCache = new();
+    private readonly ConcurrentDictionary<Type, object> _wrappersCache = new();
 
     public Mediator(IServiceProvider sp)
     {
@@ -16,21 +16,21 @@ internal class Mediator : IMediator
     public async ValueTask Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
         where TRequest : IRequest
     {
-        using var scope = _sp.CreateScope();
-        var handler = scope.ServiceProvider.GetRequiredService<IRequestHandler<TRequest>>();
+        var handler = _sp.GetRequiredService<IRequestHandler<TRequest>>();
         await handler.Handle(request, cancellationToken);
     }
 
     public async ValueTask<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
     {
         var requestType = request.GetType();
-
-        var handlerType = _handlersWithResponseTypesCache.GetOrAdd(requestType, rt =>
+        var wrapper = (IHandlerWrapper<TResponse>)_wrappersCache.GetOrAdd(requestType, rt =>
         {
-            return typeof(IRequestHandler<,>).MakeGenericType(requestType, typeof(TResponse));
+            var wrapperType = typeof(HandlerWrapper<,>).MakeGenericType(requestType, typeof(TResponse));
+            var wrapper = Activator.CreateInstance(wrapperType) ?? 
+                    throw new InvalidOperationException($"Could not create handler wrapper for '{requestType.FullName}'.");
+            return wrapper;
         });
-
-        dynamic handler = _sp.GetRequiredService(handlerType);
-        return await handler.Handle((dynamic)request, cancellationToken);
+       
+        return await wrapper.Handle(request, _sp, cancellationToken);
     }
 }
