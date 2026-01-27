@@ -26,11 +26,11 @@ internal class Mediator : IMediator
         var wrapper = (IHandlerWrapper<TResponse>)_wrappersCache.GetOrAdd(requestType, rt =>
         {
             var wrapperType = typeof(HandlerWrapper<,>).MakeGenericType(requestType, typeof(TResponse));
-            var wrapper = Activator.CreateInstance(wrapperType) ?? 
+            var wrapper = Activator.CreateInstance(wrapperType) ??
                     throw new InvalidOperationException($"Could not create handler wrapper for '{requestType.FullName}'.");
             return wrapper;
         });
-       
+
         return await wrapper.Handle(request, _sp, cancellationToken);
     }
 }

@@ -32,9 +32,9 @@ public class NuntiusInitializerTests
     }
 
     private static ServiceDescriptor? GetDescriptor(
-        ServiceCollection services, 
-        Type expectedHandlerType, 
-        Type typeToRegister, 
+        ServiceCollection services,
+        Type expectedHandlerType,
+        Type typeToRegister,
         ServiceLifetime lifetime = ServiceLifetime.Transient)
     {
         return services.FirstOrDefault(sd =>

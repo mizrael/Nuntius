@@ -11,7 +11,7 @@ public class NuntiusConfiguration
 
     public void RegisterServicesFromAssemblyContaining<T>()
         => RegisterServicesFromAssembly(typeof(T).Assembly);
-    
+
     public void RegisterServicesFromAssemblyContaining(Type type)
     => RegisterServicesFromAssembly(type.Assembly);
 

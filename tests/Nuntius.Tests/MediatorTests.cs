@@ -20,7 +20,7 @@ public class MediatorTests
     public async Task Send_should_execute_registered_handler()
     {
         var services = new ServiceCollection();
-        
+
         var handler = NSubstitute.Substitute.For<IRequestHandler<FakeRequest>>();
         services.AddTransient<IRequestHandler<FakeRequest>>(_ => handler);
 
