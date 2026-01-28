@@ -33,4 +33,9 @@ internal class Mediator : IMediator
 
         return await wrapper.Handle(request, _sp, cancellationToken);
     }
+
+    public ValueTask Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default) where TNotification : INotification
+    {
+        throw new NotImplementedException();
+    }
 }
