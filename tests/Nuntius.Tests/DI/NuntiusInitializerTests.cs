@@ -8,6 +8,7 @@ public class NuntiusInitializerTests
     [Theory]
     [InlineData(typeof(FakeRequestHandler), typeof(IRequestHandler<FakeRequest>))]
     [InlineData(typeof(FakeRequestWithResponseHandler), typeof(IRequestHandler<FakeRequestWithResponse, string>))]
+    [InlineData(typeof(FakeNotificationHandler), typeof(INotificationHandler<FakeNotification>))]
     public void RegisterType_should_register_type_when_valid(Type typeToRegister, Type expectedHandlerType)
     {
         var services = new ServiceCollection();

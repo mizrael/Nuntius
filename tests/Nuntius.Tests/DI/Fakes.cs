@@ -17,3 +17,9 @@ public class FakeRequestWithResponseHandler : IRequestHandler<FakeRequestWithRes
 }
 
 public class FakeNotification : INotification { }
+
+public class FakeNotificationHandler : INotificationHandler<FakeNotification>
+{
+    public ValueTask Handle(FakeNotification notification, CancellationToken cancellationToken)
+    => ValueTask.CompletedTask;
+}
