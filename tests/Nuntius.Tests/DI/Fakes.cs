@@ -15,3 +15,5 @@ public class FakeRequestWithResponseHandler : IRequestHandler<FakeRequestWithRes
     public ValueTask<string> Handle(FakeRequestWithResponse request, CancellationToken cancellationToken)
         => ValueTask.FromResult("response");
 }
+
+public class FakeNotification : INotification { }
