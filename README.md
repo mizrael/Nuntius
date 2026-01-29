@@ -101,7 +101,6 @@ Nuntius supports the use case of pub-sub communication via notifications and han
 You can create a notification with one or more handlers:
 
 ```csharp
-
 public sealed record UserCreated(string Email) : INotification { }
 
 public sealed class EmailSender : INotificationHandler<UserCreated>
