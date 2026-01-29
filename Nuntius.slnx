@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/root/">
     <File Path="../.gitignore" />
+    <File Path=".editorconfig" />
     <File Path="README.md" />
   </Folder>
   <Folder Name="/root/.github/" />

@@ -8,7 +8,7 @@ internal static class NuntiusInitializer
 
     static NuntiusInitializer()
     {
-        _handlerTypes = [typeof(IRequestHandler<>), typeof(IRequestHandler<,>)];
+        _handlerTypes = [typeof(IRequestHandler<>), typeof(IRequestHandler<,>), typeof(INotificationHandler<>)];
     }
 
     public static void Register(IServiceCollection services, NuntiusConfiguration configuration)
@@ -40,7 +40,7 @@ internal static class NuntiusInitializer
 
             var openGeneric = ti.GetGenericTypeDefinition();
 
-            var implementationType = _handlerTypes.FirstOrDefault(h => openGeneric.IsAssignableFrom(h));
+            var implementationType = _handlerTypes.FirstOrDefault(ht => openGeneric.IsAssignableFrom(ht));
             if (implementationType is not null)
                 services.Add(new ServiceDescriptor(ti, type, lifetime));
         }

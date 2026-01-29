@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using Nuntius.Tests.DI;
 
 namespace Nuntius.Tests;
@@ -20,7 +21,7 @@ public class MediatorTests
     public async Task Send_should_execute_registered_handler()
     {
         var services = new ServiceCollection();
-        
+
         var handler = NSubstitute.Substitute.For<IRequestHandler<FakeRequest>>();
         services.AddTransient<IRequestHandler<FakeRequest>>(_ => handler);
 
@@ -52,5 +53,116 @@ public class MediatorTests
 
         await handler.Received(1)
                     .Handle(request, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Publish_should_not_throw_when_handler_not_registered()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        await using var sp = services.BuildServiceProvider();
+        var sut = new Mediator(sp);
+
+        // Act
+        var ex = await Record.ExceptionAsync(async () => await sut.Publish(new FakeNotification()));
+
+        // Assert
+        Assert.Null(ex);
+    }
+
+    [Fact]
+    public async Task Publish_should_execute_all_registered_handlers()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        var handler1 = Substitute.For<INotificationHandler<FakeNotification>>();
+        services.AddTransient(_ => handler1);
+
+        var handler2 = Substitute.For<INotificationHandler<FakeNotification>>();
+        services.AddTransient(_ => handler2);
+
+        await using var sp = services.BuildServiceProvider();
+        var sut = new Mediator(sp);
+
+        var notification = new FakeNotification();
+
+        // Act
+        await sut.Publish(notification);
+
+        // Assert
+        await handler1
+            .Received(1)
+            .Handle(notification, Arg.Any<CancellationToken>());
+
+        await handler2
+            .Received(1)
+            .Handle(notification, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Publish_stops_executing_handlers_as_soon_as_one_of_them_throws()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        var handler1 = Substitute.For<INotificationHandler<FakeNotification>>();
+        handler1
+            .Handle(Arg.Any<FakeNotification>(), Arg.Any<CancellationToken>())
+            .Throws<Exception>();
+        services.AddTransient(_ => handler1);
+
+        var handler2 = Substitute.For<INotificationHandler<FakeNotification>>();
+        services.AddTransient(_ => handler2);
+
+        await using var sp = services.BuildServiceProvider();
+        var sut = new Mediator(sp);
+
+        var notification = new FakeNotification();
+
+        // Act
+        await Assert.ThrowsAnyAsync<Exception>(
+            async () => await sut.Publish(notification)
+        );
+
+        // Assert
+        await handler1
+            .Received(1)
+            .Handle(notification, Arg.Any<CancellationToken>());
+
+        await handler2
+            .DidNotReceiveWithAnyArgs()
+            .Handle(default!, default);
+    }
+
+    [Fact]
+    public async Task Publish_throws_any_exception_thrown_by_handler_unchanged()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        var exception = new InvalidOperationException("Test exception");
+
+        var handler1 = Substitute.For<INotificationHandler<FakeNotification>>();
+        handler1
+            .Handle(Arg.Any<FakeNotification>(), Arg.Any<CancellationToken>())
+            .Throws(exception);
+        services.AddTransient(_ => handler1);
+
+        var handler2 = Substitute.For<INotificationHandler<FakeNotification>>();
+        services.AddTransient(_ => handler2);
+
+        await using var sp = services.BuildServiceProvider();
+        var sut = new Mediator(sp);
+
+        var notification = new FakeNotification();
+
+        // Act
+        var thrownException = await Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await sut.Publish(notification)
+        );
+
+        // Assert
+        Assert.Same(exception, thrownException);
     }
 }

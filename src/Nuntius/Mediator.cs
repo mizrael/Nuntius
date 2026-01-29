@@ -6,7 +6,7 @@ namespace Nuntius;
 internal class Mediator : IMediator
 {
     private readonly IServiceProvider _sp;
-    private readonly ConcurrentDictionary<Type, object> _wrappersCache = new();
+    private readonly ConcurrentDictionary<Type, object> _requestHandlerWrappersCache = new();
 
     public Mediator(IServiceProvider sp)
     {
@@ -23,14 +23,26 @@ internal class Mediator : IMediator
     public async ValueTask<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
     {
         var requestType = request.GetType();
-        var wrapper = (IHandlerWrapper<TResponse>)_wrappersCache.GetOrAdd(requestType, rt =>
+        var wrapper = (IRequestHandlerWrapper<TResponse>)_requestHandlerWrappersCache.GetOrAdd(requestType, rt =>
         {
-            var wrapperType = typeof(HandlerWrapper<,>).MakeGenericType(requestType, typeof(TResponse));
-            var wrapper = Activator.CreateInstance(wrapperType) ?? 
-                    throw new InvalidOperationException($"Could not create handler wrapper for '{requestType.FullName}'.");
-            return wrapper;
+            var requestHandlerWrapperType = typeof(RequestHandlerWrapper<,>).MakeGenericType(requestType, typeof(TResponse));
+            var requestHandlerWrapper = Activator.CreateInstance(requestHandlerWrapperType) ??
+                    throw new InvalidOperationException($"Could not create request handler wrapper for '{requestType.FullName}'.");
+            return requestHandlerWrapper;
         });
-       
+
         return await wrapper.Handle(request, _sp, cancellationToken);
+    }
+
+    public async ValueTask Publish<TNotification>(
+        TNotification notification,
+        CancellationToken cancellationToken = default) where TNotification : INotification
+    {
+        var handlers = _sp.GetServices<INotificationHandler<TNotification>>();
+
+        foreach (var handler in handlers)
+        {
+            await handler.Handle(notification, cancellationToken);
+        }
     }
 }
