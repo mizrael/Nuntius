@@ -2,7 +2,7 @@
 
 namespace Nuntius;
 
-internal class HandlerWrapper<TRequest, TResponse> : IHandlerWrapper<TResponse>
+internal class RequestHandlerWrapper<TRequest, TResponse> : IRequestHandlerWrapper<TResponse>
     where TRequest : IRequest<TResponse>
 {
     public async ValueTask<TResponse> Handle(IRequest<TResponse> request, IServiceProvider serviceProvider, CancellationToken cancellationToken = default)

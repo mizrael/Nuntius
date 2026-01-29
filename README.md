@@ -36,8 +36,12 @@ services.AddNuntius(cfg =>
     cfg.RegisterServicesFromAssemblyContaining<Program>();
 });
 ```
+### Point to point communication
 
-Then create a request + handler pair (without a return value):
+Nuntius supports the use case of point-to-point communication via requests and handlers.
+Two types of request + handler pairs are supported: those without a return value, and those with a return value.
+
+You can create a request + handler pair without a return value:
 
 ```csharp
 using Nuntius;
@@ -54,7 +58,7 @@ public sealed class CreateUserHandler : IRequestHandler<CreateUser>
 }
 ```
 
-And, when you need a return value, create a request + handler pair with a response type:
+If you need a return value, you can create a request + handler pair with a response type:
 
 ```csharp
 using Nuntius;
@@ -78,6 +82,70 @@ await mediator.Send(new CreateUser("user@example.com"));
 
 var result = await mediator.Send(new Ping("hello"));
 ```
+
+You can also send the request using the `ISender` interface:
+
+```csharp
+var provider = services.BuildServiceProvider();
+
+var sender = provider.GetRequiredService<ISender>();
+await sender.Send(new CreateUser("user@example.com"));
+
+var result = await sender.Send(new Ping("hello"));
+```
+
+### Pub-sub communication
+
+Nuntius supports the use case of pub-sub communication via notifications and handlers.
+
+You can create a notification with one or more handlers:
+
+```csharp
+public sealed record UserCreated(string Email) : INotification { }
+
+public sealed class EmailSender : INotificationHandler<UserCreated>
+{
+    public ValueTask Handle(UserCreated notification, CancellationToken ct)
+    {
+        // ...send a confirmation email...
+        return ValueTask.CompletedTask;
+    }
+}
+
+public sealed class UserWorkspaceCreator : INotificationHandler<UserCreated>
+{
+    public ValueTask Handle(UserCreated notification, CancellationToken ct)
+    {
+        // ...create user workspace...
+        return ValueTask.CompletedTask;
+    }
+}
+
+```
+
+Finally, resolve `IMediator` and publish the notification:
+
+```csharp
+var provider = services.BuildServiceProvider();
+
+var mediator = provider.GetRequiredService<IMediator>();
+await mediator.Publish(new UserCreated("user@example.com"));
+
+```
+
+You can also publish the notification using the `IPublisher` interface:
+
+```csharp
+var provider = services.BuildServiceProvider();
+
+var publisher = provider.GetRequiredService<IPublisher>();
+await publisher.Publish(new UserCreated("user@example.com"));
+
+```
+
+You can register zero or more handlers for each notification type. When you publish a notification, all registered handlers will be invoked in a serial fashion.
+If no handlers are registered for a notification type, publishing it will have no effect.
+If any handler throws an exception, the publishing process will stop, and the exception will be propagated to the caller.
 
 ## When to Use Nuntius
 

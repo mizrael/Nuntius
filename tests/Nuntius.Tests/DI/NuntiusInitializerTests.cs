@@ -8,6 +8,7 @@ public class NuntiusInitializerTests
     [Theory]
     [InlineData(typeof(FakeRequestHandler), typeof(IRequestHandler<FakeRequest>))]
     [InlineData(typeof(FakeRequestWithResponseHandler), typeof(IRequestHandler<FakeRequestWithResponse, string>))]
+    [InlineData(typeof(FakeNotificationHandler), typeof(INotificationHandler<FakeNotification>))]
     public void RegisterType_should_register_type_when_valid(Type typeToRegister, Type expectedHandlerType)
     {
         var services = new ServiceCollection();
@@ -32,9 +33,9 @@ public class NuntiusInitializerTests
     }
 
     private static ServiceDescriptor? GetDescriptor(
-        ServiceCollection services, 
-        Type expectedHandlerType, 
-        Type typeToRegister, 
+        ServiceCollection services,
+        Type expectedHandlerType,
+        Type typeToRegister,
         ServiceLifetime lifetime = ServiceLifetime.Transient)
     {
         return services.FirstOrDefault(sd =>
