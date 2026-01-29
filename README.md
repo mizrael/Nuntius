@@ -143,6 +143,10 @@ await publisher.Publish(new UserCreated("user@example.com"));
 
 ```
 
+You can register zero or more handlers for each notification type. When you publish a notification, all registered handlers will be invoked in a serial fashion.
+If no handlers are registered for a notification type, publishing it will have no effect.
+If any handler throws an exception, the publishing process will stop, and the exception will be propagated to the caller.
+
 ## When to Use Nuntius
 
 Nuntius is a good fit if you:
