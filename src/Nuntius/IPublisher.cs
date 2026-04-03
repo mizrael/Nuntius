@@ -14,6 +14,10 @@ public interface IPublisher
     /// <param name="notification">
     /// The notification to publish.
     /// </param>
+    /// <param name="strategy">
+    /// Optional publishing strategy. When <c>null</c>, the default strategy
+    /// configured at DI registration time is used.
+    /// </param>
     /// <param name="cancellationToken">
     /// Optional cancellation token.
     /// </param>
@@ -25,5 +29,6 @@ public interface IPublisher
     /// </returns>
     ValueTask Publish<TNotification>(
         TNotification notification,
+        IPublishStrategy? strategy = null,
         CancellationToken cancellationToken = default) where TNotification : INotification;
 }

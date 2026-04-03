@@ -6,11 +6,13 @@ namespace Nuntius;
 internal class Mediator : IMediator
 {
     private readonly IServiceProvider _sp;
+    private readonly IPublishStrategy _publishStrategy;
     private readonly ConcurrentDictionary<Type, object> _requestHandlerWrappersCache = new();
 
-    public Mediator(IServiceProvider sp)
+    public Mediator(IServiceProvider sp, IPublishStrategy publishStrategy)
     {
         _sp = sp ?? throw new ArgumentNullException(nameof(sp));
+        _publishStrategy = publishStrategy ?? throw new ArgumentNullException(nameof(publishStrategy));
     }
 
     public async ValueTask Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
@@ -36,13 +38,11 @@ internal class Mediator : IMediator
 
     public async ValueTask Publish<TNotification>(
         TNotification notification,
+        IPublishStrategy? strategy = null,
         CancellationToken cancellationToken = default) where TNotification : INotification
     {
+        var effectiveStrategy = strategy ?? _publishStrategy;
         var handlers = _sp.GetServices<INotificationHandler<TNotification>>();
-
-        foreach (var handler in handlers)
-        {
-            await handler.Handle(notification, cancellationToken);
-        }
+        await effectiveStrategy.ExecuteAsync(handlers, notification, cancellationToken);
     }
 }
