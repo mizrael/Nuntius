@@ -110,4 +110,28 @@ public class NuntiusConfigurationBuilderTests
 
         Assert.IsAssignableFrom<IReadOnlyList<System.Reflection.Assembly>>(config.AssembliesToRegister);
     }
+
+    [Fact]
+    public void Build_should_produce_defensive_copy_of_assemblies()
+    {
+        var builder = new NuntiusConfigurationBuilder()
+            .RegisterServicesFromAssemblyContaining<NuntiusConfigurationBuilderTests>();
+
+        var config = builder.Build();
+        var countAfterBuild = config.AssembliesToRegister.Count;
+
+        // Mutating the builder after Build() must not affect the config
+        builder.RegisterServicesFromAssemblyContaining<IMediator>();
+
+        Assert.Equal(countAfterBuild, config.AssembliesToRegister.Count);
+    }
+
+    [Fact]
+    public void AddNuntius_should_throw_when_configure_is_null()
+    {
+        var services = new ServiceCollection();
+
+        Assert.Throws<ArgumentNullException>(() =>
+            services.AddNuntius(null!));
+    }
 }
