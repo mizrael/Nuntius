@@ -6,6 +6,14 @@ namespace Nuntius;
 /// If one or more handlers throw, an <see cref="AggregateException"/> is thrown
 /// containing all exceptions.
 /// </summary>
+/// <remarks>
+/// Handlers are resolved from the current DI scope before being passed to this strategy.
+/// When multiple handlers share a scoped dependency that is not thread-safe
+/// (e.g. an Entity Framework <c>DbContext</c>), concurrent execution will access
+/// the same instance from multiple threads, which can cause race conditions.
+/// If your handlers have non-thread-safe scoped dependencies, prefer
+/// <see cref="SequentialPublishStrategy"/> or ensure thread safety in your handlers.
+/// </remarks>
 public sealed class ParallelPublishStrategy : IPublishStrategy
 {
     /// <summary>

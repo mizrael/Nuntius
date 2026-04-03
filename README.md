@@ -168,6 +168,14 @@ The default strategy is set at registration time via `WithPublishStrategy()`. Yo
 await mediator.Publish(new UserCreated("user@example.com"), ParallelPublishStrategy.Instance);
 ```
 
+> **⚠️ Thread-safety note for `ParallelPublishStrategy`**
+>
+> Notification handlers are resolved from the current DI scope before they are passed to the strategy.
+> When multiple handlers share a **scoped dependency that is not thread-safe** (e.g. an Entity Framework `DbContext`),
+> `ParallelPublishStrategy` will execute those handlers concurrently on the **same instance**, which can lead to race conditions.
+>
+> If your handlers have non-thread-safe scoped dependencies, prefer `SequentialPublishStrategy` or ensure thread safety in your handlers.
+
 ## When to Use Nuntius
 
 Nuntius is a good fit if you:
