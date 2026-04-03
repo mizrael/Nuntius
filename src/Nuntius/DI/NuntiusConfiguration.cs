@@ -4,12 +4,13 @@ using System.Reflection;
 namespace Nuntius.DI;
 
 /// <summary>
-/// Configuration options for Nuntius library dependency injection integration.
+/// Immutable configuration options for Nuntius library dependency injection integration.
+/// Use <see cref="NuntiusConfigurationBuilder"/> to construct an instance.
 /// </summary>
-public class NuntiusConfiguration
+public sealed class NuntiusConfiguration
 {
     /// <summary>
-    /// Gets or sets the service lifetime used to register services in the dependency injection container.
+    /// Gets the service lifetime used to register services in the dependency injection container.
     /// Default value is <see cref="ServiceLifetime.Transient"/>.
     /// </summary>
     /// <remarks>
@@ -20,48 +21,28 @@ public class NuntiusConfiguration
     ///     <item><see cref="INotificationHandler{TNotification}"/></item>
     /// </list>
     /// </remarks>
-    public ServiceLifetime Lifetime { get; set; } = ServiceLifetime.Transient;
-
-    internal List<Assembly> AssembliesToRegister { get; } = new();
+    public ServiceLifetime Lifetime { get; }
 
     /// <summary>
-    /// Register various handlers from assembly containing given type.
+    /// Gets the default publishing strategy used when publishing notifications.
+    /// Default value is <see cref="SequentialPublishStrategy.Instance"/>.
     /// </summary>
-    /// <typeparam name="T">
-    /// Type from assembly to scan.
-    /// </typeparam>
     /// <remarks>
-    /// Implementations of the following interfaces found in the assembly will be registered:
-    /// <list type="bullet">
-    ///     <item><see cref="IRequestHandler{TRequest}"/></item>
-    ///     <item><see cref="IRequestHandler{TRequest, TResponse}"/></item>
-    ///     <item><see cref="INotificationHandler{TNotification}"/></item>
-    /// </list>
+    /// This strategy is used when <see cref="IPublisher.Publish{TNotification}"/>
+    /// is called without an explicit strategy.
+    /// Can be overridden per-call by passing a strategy to the publish method.
     /// </remarks>
-    public void RegisterServicesFromAssemblyContaining<T>()
-        => RegisterServicesFromAssembly(typeof(T).Assembly);
+    public IPublishStrategy DefaultPublishStrategy { get; }
 
-    /// <summary>
-    /// Register various handlers from assembly containing given type.
-    /// </summary>
-    /// <param name="type">
-    /// Type from assembly to scan.
-    /// </param>
-    /// <remarks>
-    /// Implementations of the following interfaces found in the assembly will be registered:
-    /// <list type="bullet">
-    ///     <item><see cref="IRequestHandler{TRequest}"/></item>
-    ///     <item><see cref="IRequestHandler{TRequest, TResponse}"/></item>
-    ///     <item><see cref="INotificationHandler{TNotification}"/></item>
-    /// </list>
-    /// </remarks>
-    public void RegisterServicesFromAssemblyContaining(Type type)
-    => RegisterServicesFromAssembly(type.Assembly);
+    public IReadOnlyList<Assembly> AssembliesToRegister { get; }
 
-    private NuntiusConfiguration RegisterServicesFromAssembly(Assembly assembly)
+    internal NuntiusConfiguration(
+        ServiceLifetime lifetime,
+        IPublishStrategy defaultPublishStrategy,
+        IReadOnlyList<Assembly> assembliesToRegister)
     {
-        this.AssembliesToRegister.Add(assembly);
-
-        return this;
+        Lifetime = lifetime;
+        DefaultPublishStrategy = defaultPublishStrategy;
+        AssembliesToRegister = assembliesToRegister;
     }
 }

@@ -13,9 +13,6 @@ internal static class NuntiusInitializer
 
     public static void Register(IServiceCollection services, NuntiusConfiguration configuration)
     {
-        if (!configuration.AssembliesToRegister.Any())
-            throw new ApplicationException("No assemblies have been registered.");
-
         foreach (var assembly in configuration.AssembliesToRegister)
         {
             var types = assembly.GetTypes();
