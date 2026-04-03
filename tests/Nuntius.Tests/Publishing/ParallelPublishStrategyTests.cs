@@ -6,7 +6,7 @@ namespace Nuntius.Tests.Publishing;
 
 public class ParallelPublishStrategyTests
 {
-    private readonly ParallelPublishStrategy _sut = new();
+    private readonly ParallelPublishStrategy _sut = ParallelPublishStrategy.Instance;
 
     [Fact]
     public async Task ExecuteAsync_should_call_all_handlers()
@@ -98,5 +98,26 @@ public class ParallelPublishStrategyTests
 
         // Assert
         await handler.Received(1).Handle(notification, token);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_should_propagate_cancellation_without_NRE()
+    {
+        // Arrange
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var notification = new FakeNotification();
+        var handler = Substitute.For<INotificationHandler<FakeNotification>>();
+        handler.Handle(Arg.Any<FakeNotification>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                callInfo.Arg<CancellationToken>().ThrowIfCancellationRequested();
+                return ValueTask.CompletedTask;
+            });
+
+        // Act & Assert — should throw OperationCanceledException, not NullReferenceException
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => _sut.ExecuteAsync([handler], notification, cts.Token).AsTask());
     }
 }

@@ -42,7 +42,7 @@ internal class Mediator : IMediator
         CancellationToken cancellationToken = default) where TNotification : INotification
     {
         var effectiveStrategy = strategy ?? _publishStrategy;
-        var handlers = _sp.GetServices<INotificationHandler<TNotification>>();
+        var handlers = _sp.GetServices<INotificationHandler<TNotification>>().ToArray();
         await effectiveStrategy.ExecuteAsync(handlers, notification, cancellationToken);
     }
 }

@@ -81,7 +81,7 @@ public sealed class NuntiusConfigurationBuilder
         return new NuntiusConfiguration(
             _lifetime,
             _publishStrategy,
-            _assemblies.ToArray());
+            Array.AsReadOnly(_assemblies.ToArray()));
     }
 
     private NuntiusConfigurationBuilder RegisterServicesFromAssembly(Assembly assembly)

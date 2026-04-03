@@ -6,7 +6,7 @@ namespace Nuntius.Tests.Publishing;
 
 public class SequentialPublishStrategyTests
 {
-    private readonly SequentialPublishStrategy _sut = new();
+    private readonly SequentialPublishStrategy _sut = SequentialPublishStrategy.Instance;
 
     [Fact]
     public async Task ExecuteAsync_should_call_all_handlers()

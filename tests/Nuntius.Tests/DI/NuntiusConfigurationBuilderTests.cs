@@ -134,4 +134,29 @@ public class NuntiusConfigurationBuilderTests
         Assert.Throws<ArgumentNullException>(() =>
             services.AddNuntius(null!));
     }
+
+    [Fact]
+    public void AddNuntius_should_register_publish_strategy_as_IPublishStrategy()
+    {
+        var services = new ServiceCollection();
+
+        services.AddNuntius(cfg => cfg
+            .RegisterServicesFromAssemblyContaining<NuntiusConfigurationBuilderTests>());
+
+        var sp = services.BuildServiceProvider();
+        var strategy = sp.GetService<IPublishStrategy>();
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public void Build_should_not_allow_cast_mutation_of_assemblies()
+    {
+        var config = new NuntiusConfigurationBuilder()
+            .RegisterServicesFromAssemblyContaining<NuntiusConfigurationBuilderTests>()
+            .Build();
+
+        // The backing store should not be directly castable to a mutable array
+        Assert.False(config.AssembliesToRegister is System.Reflection.Assembly[]);
+    }
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Nuntius.Tests.DI;
@@ -12,7 +12,7 @@ public class MediatorTests
     {
         var services = new ServiceCollection();
         var sp = services.BuildServiceProvider();
-        var sut = new Mediator(sp, new SequentialPublishStrategy());
+        var sut = new Mediator(sp, SequentialPublishStrategy.Instance);
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await sut.Send(new FakeRequest()));
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await sut.Send(new FakeRequestWithResponse()));
     }
@@ -26,7 +26,7 @@ public class MediatorTests
         services.AddTransient<IRequestHandler<FakeRequest>>(_ => handler);
 
         var sp = services.BuildServiceProvider();
-        var sut = new Mediator(sp, new SequentialPublishStrategy());
+        var sut = new Mediator(sp, SequentialPublishStrategy.Instance);
 
         var request = new FakeRequest();
 
@@ -45,7 +45,7 @@ public class MediatorTests
         services.AddTransient<IRequestHandler<FakeRequestWithResponse, string>>(_ => handler);
 
         var sp = services.BuildServiceProvider();
-        var sut = new Mediator(sp, new SequentialPublishStrategy());
+        var sut = new Mediator(sp, SequentialPublishStrategy.Instance);
 
         var request = new FakeRequestWithResponse();
 
@@ -61,7 +61,7 @@ public class MediatorTests
         // Arrange
         var services = new ServiceCollection();
         await using var sp = services.BuildServiceProvider();
-        var sut = new Mediator(sp, new SequentialPublishStrategy());
+        var sut = new Mediator(sp, SequentialPublishStrategy.Instance);
 
         // Act
         var ex = await Record.ExceptionAsync(async () => await sut.Publish(new FakeNotification()));
@@ -83,7 +83,7 @@ public class MediatorTests
         services.AddTransient(_ => handler2);
 
         await using var sp = services.BuildServiceProvider();
-        var sut = new Mediator(sp, new SequentialPublishStrategy());
+        var sut = new Mediator(sp, SequentialPublishStrategy.Instance);
 
         var notification = new FakeNotification();
 

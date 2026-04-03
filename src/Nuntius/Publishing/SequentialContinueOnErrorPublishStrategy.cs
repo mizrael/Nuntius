@@ -11,9 +11,11 @@ namespace Nuntius;
 public sealed class SequentialContinueOnErrorPublishStrategy : IPublishStrategy
 {
     /// <summary>
-    /// Singleton instance. This strategy is stateless and thread-safe.
+    /// Shared instance. This strategy is stateless and thread-safe.
     /// </summary>
     public static readonly SequentialContinueOnErrorPublishStrategy Instance = new();
+
+    private SequentialContinueOnErrorPublishStrategy() { }
 
     /// <inheritdoc />
     public async ValueTask ExecuteAsync<TNotification>(

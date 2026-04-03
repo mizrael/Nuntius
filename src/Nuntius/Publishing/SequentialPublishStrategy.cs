@@ -10,9 +10,11 @@ namespace Nuntius;
 public sealed class SequentialPublishStrategy : IPublishStrategy
 {
     /// <summary>
-    /// Singleton instance. This strategy is stateless and thread-safe.
+    /// Shared instance. This strategy is stateless and thread-safe.
     /// </summary>
     public static readonly SequentialPublishStrategy Instance = new();
+
+    private SequentialPublishStrategy() { }
 
     /// <inheritdoc />
     public async ValueTask ExecuteAsync<TNotification>(

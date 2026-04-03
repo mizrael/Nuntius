@@ -48,7 +48,7 @@ public static class IServiceCollectionExtensions
 
         NuntiusInitializer.Register(services, config);
 
-        services.AddSingleton(config.DefaultPublishStrategy);
+        services.AddSingleton<IPublishStrategy>(config.DefaultPublishStrategy);
         services.AddTransient<IMediator, Mediator>();
         services.AddTransient<ISender>(sp => sp.GetRequiredService<IMediator>());
         services.AddTransient<IPublisher>(sp => sp.GetRequiredService<IMediator>());

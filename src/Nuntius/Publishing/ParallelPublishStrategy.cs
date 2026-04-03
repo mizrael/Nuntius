@@ -9,9 +9,11 @@ namespace Nuntius;
 public sealed class ParallelPublishStrategy : IPublishStrategy
 {
     /// <summary>
-    /// Singleton instance. This strategy is stateless and thread-safe.
+    /// Shared instance. This strategy is stateless and thread-safe.
     /// </summary>
     public static readonly ParallelPublishStrategy Instance = new();
+
+    private ParallelPublishStrategy() { }
 
     /// <inheritdoc />
     public async ValueTask ExecuteAsync<TNotification>(
@@ -41,7 +43,16 @@ public sealed class ParallelPublishStrategy : IPublishStrategy
         }
         catch
         {
-            throw whenAll.Exception!;
+            if (whenAll.Exception is { InnerExceptions: var inners }
+                && inners.All(e => e is OperationCanceledException))
+            {
+                throw inners[0];
+            }
+
+            if (whenAll.Exception is not null)
+                throw whenAll.Exception;
+
+            throw;
         }
     }
 }
