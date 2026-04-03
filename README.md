@@ -31,10 +31,17 @@ using Microsoft.Extensions.DependencyInjection;
 
 var services = new ServiceCollection();
 
-services.AddNuntius(cfg =>
-{
-    cfg.RegisterServicesFromAssemblyContaining<Program>();
-});
+services.AddNuntius(cfg => cfg
+    .RegisterServicesFromAssemblyContaining<Program>());
+```
+
+You can customise the handler lifetime and default publishing strategy via the builder:
+
+```csharp
+services.AddNuntius(cfg => cfg
+    .RegisterServicesFromAssemblyContaining<Program>()
+    .WithLifetime(ServiceLifetime.Scoped)
+    .WithPublishStrategy(ParallelPublishStrategy.Instance));
 ```
 ### Point to point communication
 
@@ -143,9 +150,23 @@ await publisher.Publish(new UserCreated("user@example.com"));
 
 ```
 
-You can register zero or more handlers for each notification type. When you publish a notification, all registered handlers will be invoked in a serial fashion.
-If no handlers are registered for a notification type, publishing it will have no effect.
-If any handler throws an exception, the publishing process will stop, and the exception will be propagated to the caller.
+You can register zero or more handlers for each notification type. If no handlers are registered for a notification type, publishing it will have no effect.
+
+### Publishing strategies
+
+Nuntius ships with three built-in publishing strategies that control how notification handlers are executed:
+
+| Strategy | Behaviour |
+|---|---|
+| `SequentialPublishStrategy` *(default)* | Executes handlers one by one. Stops on the first exception. |
+| `ParallelPublishStrategy` | Starts all handlers concurrently. Collects all exceptions into an `AggregateException`. |
+| `SequentialContinueOnErrorPublishStrategy` | Executes handlers one by one but continues on error. Throws an `AggregateException` after all handlers complete. |
+
+The default strategy is set at registration time via `WithPublishStrategy()`. You can also override it per-call:
+
+```csharp
+await mediator.Publish(new UserCreated("user@example.com"), ParallelPublishStrategy.Instance);
+```
 
 ## When to Use Nuntius
 
