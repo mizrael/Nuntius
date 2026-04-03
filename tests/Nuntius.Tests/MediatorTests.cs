@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Nuntius.Tests.DI;
@@ -12,7 +12,7 @@ public class MediatorTests
     {
         var services = new ServiceCollection();
         var sp = services.BuildServiceProvider();
-        var sut = new Mediator(sp);
+        var sut = new Mediator(sp, SequentialPublishStrategy.Instance);
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await sut.Send(new FakeRequest()));
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await sut.Send(new FakeRequestWithResponse()));
     }
@@ -26,7 +26,7 @@ public class MediatorTests
         services.AddTransient<IRequestHandler<FakeRequest>>(_ => handler);
 
         var sp = services.BuildServiceProvider();
-        var sut = new Mediator(sp);
+        var sut = new Mediator(sp, SequentialPublishStrategy.Instance);
 
         var request = new FakeRequest();
 
@@ -45,7 +45,7 @@ public class MediatorTests
         services.AddTransient<IRequestHandler<FakeRequestWithResponse, string>>(_ => handler);
 
         var sp = services.BuildServiceProvider();
-        var sut = new Mediator(sp);
+        var sut = new Mediator(sp, SequentialPublishStrategy.Instance);
 
         var request = new FakeRequestWithResponse();
 
@@ -61,7 +61,7 @@ public class MediatorTests
         // Arrange
         var services = new ServiceCollection();
         await using var sp = services.BuildServiceProvider();
-        var sut = new Mediator(sp);
+        var sut = new Mediator(sp, SequentialPublishStrategy.Instance);
 
         // Act
         var ex = await Record.ExceptionAsync(async () => await sut.Publish(new FakeNotification()));
@@ -83,7 +83,7 @@ public class MediatorTests
         services.AddTransient(_ => handler2);
 
         await using var sp = services.BuildServiceProvider();
-        var sut = new Mediator(sp);
+        var sut = new Mediator(sp, SequentialPublishStrategy.Instance);
 
         var notification = new FakeNotification();
 
@@ -101,68 +101,85 @@ public class MediatorTests
     }
 
     [Fact]
-    public async Task Publish_stops_executing_handlers_as_soon_as_one_of_them_throws()
+    public async Task Publish_should_delegate_to_publish_strategy()
     {
         // Arrange
         var services = new ServiceCollection();
 
-        var handler1 = Substitute.For<INotificationHandler<FakeNotification>>();
-        handler1
-            .Handle(Arg.Any<FakeNotification>(), Arg.Any<CancellationToken>())
-            .Throws<Exception>();
-        services.AddTransient(_ => handler1);
-
-        var handler2 = Substitute.For<INotificationHandler<FakeNotification>>();
-        services.AddTransient(_ => handler2);
+        var handler = Substitute.For<INotificationHandler<FakeNotification>>();
+        services.AddTransient(_ => handler);
 
         await using var sp = services.BuildServiceProvider();
-        var sut = new Mediator(sp);
+        var strategy = Substitute.For<IPublishStrategy>();
+        var sut = new Mediator(sp, strategy);
 
         var notification = new FakeNotification();
 
         // Act
-        await Assert.ThrowsAnyAsync<Exception>(
-            async () => await sut.Publish(notification)
-        );
+        await sut.Publish(notification);
 
         // Assert
-        await handler1
+        await strategy
             .Received(1)
-            .Handle(notification, Arg.Any<CancellationToken>());
-
-        await handler2
-            .DidNotReceiveWithAnyArgs()
-            .Handle(default!, default);
+            .ExecuteAsync(
+                Arg.Any<IEnumerable<INotificationHandler<FakeNotification>>>(),
+                notification,
+                Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Publish_throws_any_exception_thrown_by_handler_unchanged()
+    public async Task Publish_should_use_provided_strategy_when_specified()
     {
         // Arrange
         var services = new ServiceCollection();
 
-        var exception = new InvalidOperationException("Test exception");
-
         var handler1 = Substitute.For<INotificationHandler<FakeNotification>>();
-        handler1
-            .Handle(Arg.Any<FakeNotification>(), Arg.Any<CancellationToken>())
-            .Throws(exception);
+        handler1.Handle(Arg.Any<FakeNotification>(), Arg.Any<CancellationToken>())
+            .Throws<InvalidOperationException>();
         services.AddTransient(_ => handler1);
 
         var handler2 = Substitute.For<INotificationHandler<FakeNotification>>();
         services.AddTransient(_ => handler2);
 
         await using var sp = services.BuildServiceProvider();
-        var sut = new Mediator(sp);
 
+        // Default strategy is Sequential (stops on error), but we override with ContinueOnError
+        var sut = new Mediator(sp, SequentialPublishStrategy.Instance);
         var notification = new FakeNotification();
 
-        // Act
-        var thrownException = await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await sut.Publish(notification)
-        );
+        // Act — override with continue-on-error strategy
+        await Assert.ThrowsAsync<AggregateException>(
+            () => sut.Publish(notification, SequentialContinueOnErrorPublishStrategy.Instance).AsTask());
 
-        // Assert
-        Assert.Same(exception, thrownException);
+        // Assert — handler2 was called despite handler1 throwing
+        await handler2.Received(1).Handle(notification, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Publish_should_use_default_strategy_when_no_strategy_specified()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        var handler1 = Substitute.For<INotificationHandler<FakeNotification>>();
+        handler1.Handle(Arg.Any<FakeNotification>(), Arg.Any<CancellationToken>())
+            .Throws<InvalidOperationException>();
+        services.AddTransient(_ => handler1);
+
+        var handler2 = Substitute.For<INotificationHandler<FakeNotification>>();
+        services.AddTransient(_ => handler2);
+
+        await using var sp = services.BuildServiceProvider();
+
+        // Default strategy is SequentialContinueOnError
+        var sut = new Mediator(sp, SequentialContinueOnErrorPublishStrategy.Instance);
+        var notification = new FakeNotification();
+
+        // Act — no strategy override, should use the default (continue on error)
+        await Assert.ThrowsAsync<AggregateException>(
+            () => sut.Publish(notification).AsTask());
+
+        // Assert — handler2 was called (continue-on-error is the default)
+        await handler2.Received(1).Handle(notification, Arg.Any<CancellationToken>());
     }
 }
